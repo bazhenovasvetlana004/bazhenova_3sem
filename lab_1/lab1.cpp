@@ -96,13 +96,13 @@ public:
     {
         std::set<int> temp1 = s1.return_all_elements();
         std::set<int> temp2 = s2.return_all_elements();
-        for (int i = 0;i< temp1.size(); i++)
+        std::set<int>::iterator it = temp1.begin();
+        for (int i = 0;i< temp1.size(); i++) 
         {
-            std::set<int>::iterator it =temp1.begin();
-            for (int k = 0; k < i; k++) it++;
             int temp_value = *it;
             if (temp2.count(temp_value) > 0)
                 states.insert(temp_value);
+            it++;
         }
     }
     virtual bool contains(int s) const {
@@ -123,13 +123,13 @@ public:
     {
         std::set<int> temp1 = s1.return_all_elements();
         std::set<int> temp2 = s2.return_all_elements();
+        std::set<int>::iterator it = temp1.begin();
         for (int i = 0;i< temp1.size(); i++)
         {
-            std::set<int>::iterator it =temp1.begin();
-            for (int k = 0; k < i; k++) it++;
             int temp_value = *it;
             if (temp2.count(temp_value) == 0)
                 states.insert(temp_value);
+            it++;
         }
     }
     virtual bool contains(int s) const {
@@ -143,62 +143,56 @@ public:
 
 class SegMinusSetState :public State {
 private:
-    int const beg, end;
-    std::set<int> erasing;
+    std::set<int> states;
 public:
-    SegMinusSetState(int beg, int end, std::set<int> const& src) : beg(beg), end(end), erasing(src) { }
-
+    SegMinusSetState(State& segment, State& setstate)
+    {
+        DopState temp(segment, setstate);
+        states = temp.return_all_elements();
+    }
     virtual bool contains(int s) const {
-        return (s >= beg && s <= end) && !(erasing.count(s) > 0);
+        return (states.count(s) > 0);
     }
     virtual std::set<int> return_all_elements() const
     {
-        SegmentState temp1(beg, end);
-        SetState temp2(erasing);
-        DopState temp3(temp1, temp2);
-        return temp3.return_all_elements();
+        return states;
     }
 };
 
 class SegPlusSetState :public State {
 private:
-    int const beg, end;
-    std::set<int> dop;
+    std::set<int> states;
 public:
-    SegPlusSetState(int beg, int end, std::set<int> const& src) : beg(beg), end(end), dop(src) { }
-
+    SegPlusSetState(State& segment, State& setstate)
+    {
+        UnionState temp(segment, setstate);
+        states = temp.return_all_elements();
+    }
     virtual bool contains(int s) const {
-        return (s >= beg && s <= end) || (dop.count(s) > 0);
+        return (states.count(s) > 0);
     }
     virtual std::set<int> return_all_elements() const
     {
-        SegmentState temp1(beg, end);
-        SetState temp2(dop);
-        UnionState temp3(temp1, temp2);
-        return temp3.return_all_elements();
+        return states;
     }
 };
 
 class SegPlusSetMinusSetState :public State {
 private:
-    int const beg, end;
-    std::set<int> dop;
-    std::set<int> erasing;
-
+    std::set<int> states;
 public:
-    SegPlusSetMinusSetState(int beg, int end, std::set<int> const& src, std::set<int> const& src2) : beg(beg), end(end), dop(src),erasing(src2) { }
-
+    SegPlusSetMinusSetState(State& segment, State& setstate1, State& setstate2)
+    {
+        UnionState temp1(segment, setstate1);
+        DopState temp2(temp1, setstate2);
+        states = temp2.return_all_elements();
+    }
     virtual bool contains(int s) const {
-        return (s >= beg && s <= end) && !(erasing.count(s) > 0) || (dop.count(s)>0);
+        return (states.count(s) > 0);
     }
     virtual std::set<int> return_all_elements() const
     {
-        SegmentState temp1(beg, end);
-        SetState temp2(dop);
-        UnionState temp3(temp1, temp2);
-        SetState temp4(erasing);
-        DopState temp5(temp3, temp4);
-        return temp5.return_all_elements();
+        return states;
     }
 };
 
@@ -230,18 +224,19 @@ int main(int argc, const char* argv[]) {
     UnionState u(s, ss); //17
     InterceptionState is(s, ss); //4
     DopState ds(ss, s); //6
-    SegMinusSetState smss(4, 12, {9, 11}); //7
-    SegPlusSetState spss(15, 21, {7, 86, 53, 44, 61, 57, 100, 3});//15
-    SegPlusSetMinusSetState spsmss(87, 100, {23, 17, 92, 18, 69, 47, 51}, {90, 99, 93, 23});//16
+    SegmentState smss1(4, 12);
+    SetState smss2({ 9, 11 });
+    SegMinusSetState smss (smss1, smss2); //7
+    SegmentState spss1(15, 21);
+    SetState spss2({7, 86, 53, 44, 61, 57, 100, 3});
+    SegPlusSetState spss(spss1, spss2);//15
+    SegmentState spsmss1(87, 100);
+    SetState spsmss2({ 23, 17, 92, 18, 69, 47, 51 });
+    SetState spsmss3({ 90, 99, 93, 23 });
+    SegPlusSetMinusSetState spsmss(spsmss1, spsmss2, spsmss3);//16
     ProbabilityTest pt(10, 0, 100, 100000);
     std::cout << pt(d) << std::endl;
     std::cout << pt(s) << std::endl;
     std::cout << pt(ss) << std::endl;
     return 0;
 }
-
-
-
-
-
-
