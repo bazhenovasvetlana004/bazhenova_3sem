@@ -84,5 +84,5 @@ int main()
 	std::cout << grid3.get_xsize() << ' ' << grid3.get_ysize() << std::endl; //размер
     std::cout << grid1 << std::endl; //вывод
 
-	return 0;
+    return 0;
 }
